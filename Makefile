@@ -22,14 +22,11 @@ NCRTL_PARAMETERS = \
 
 all: ncrtl
 
-%.s: %.c
-	cc65 -Os $+
-
-%.o: %.s
-	ca65 --listing -I /usr/local/lib/cc65/asminc $+
-
 ncrtl:  
 	ncverilog $(NCRTL_PARAMETERS)  
+
+push:
+	git push -u origin master
 
 clean:
 	rm -rf INCA_libs hst_err.log hst_err.log hst_res.log\

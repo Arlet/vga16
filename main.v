@@ -94,7 +94,7 @@ reg [11:0] x = 0;
 reg [10:0] y = 0;
 
 wire xdone = (x == 639);
-wire ydone = (y == 480);
+wire ydone = (y == 479);
 
 /*
  * video active flag
