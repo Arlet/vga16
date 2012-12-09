@@ -38,7 +38,7 @@ reg [63:0] name = "0000.ppm";
 
 initial begin
         image = $fopen( name );
-	$fwrite( image, "P3 640 480 1\n" );
+	$fwrite( image, "P3 640 480 64\n" );
 end
 
 always @(negedge vsync) begin
@@ -48,7 +48,7 @@ always @(negedge vsync) begin
      name[55:48] = "0" + (scan / 100) % 10; 
      name[63:56] = "0" + (scan / 1000); 
      image = $fopen( name );
-     $fwrite( image, "P3 640 480 1\n" );
+     $fwrite( image, "P3 640 480 64\n" );
      $display( "opened %s", name );
      scan = scan + 1;
 end

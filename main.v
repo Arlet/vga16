@@ -20,9 +20,9 @@ wire [15:0] rgb;
 assign blue = rgb[4:0];
 assign green = rgb[10:5];
 assign red = rgb[15:11];
-reg fifo_write;
+wire fifo_write;
 wire fifo_full;
-reg [15:0] fifo_data;
+wire [15:0] fifo_data;
 wire pclk0;
 wire vtrigger;
 
@@ -69,6 +69,15 @@ DCM_SP #(
         .RST(1'b0)
 );
 
+reg [11:0] w = 1;
+
+always @(posedge clk)
+   if( vtrigger )
+       if( w < 400 )
+           w <= 400;
+       else
+	   w <= w + 1;
+
 /*
  * VGA generator
  */
@@ -84,68 +93,14 @@ vga vga(
 	.vtrigger(vtrigger)
    	);
 
-/*
- * when vtrigger is pulsed, generate new frame by sending 640x480 pixels
- * to FIFO.
- */
+line line( 
+    	.clk(clk),
+	.w(w),
+	.h(400),
+	.trigger(vtrigger),
+	.fifo_full(fifo_full),
+	.fifo_write(fifo_write),
+	.fifo_data(fifo_data) );
 
-reg vid_active = 0;
-reg [11:0] x = 0;
-reg [10:0] y = 0;
-
-wire xdone = (x == 639);
-wire ydone = (y == 479);
-
-/*
- * video active flag
- */
-always @(posedge clk)
-    if( vtrigger )
-        vid_active <= 1;
-    else if( xdone && ydone )
-        vid_active <= 0;
-
-/*
- * count x, reset at end of line, and pause when FIFO is full
- */
-always @(posedge clk)
-    if( !vid_active )
-        x <= 0;
-    else if( !fifo_full )
-        if( xdone )
-	    x <= 0;
-	else
-	    x <= x + 1;
-
-/*
- * count y, reset at start of new frame, and increment at end
- * of line. Pause when FIFO is full.
- */
-always @(posedge clk)
-    if( !vid_active ) 
-        y <= 0;
-    else if( xdone && !fifo_full )
-        y <= y + 1;
-
-/*
- * only write fifo during active pixels
- */
-always @(posedge clk)
-    fifo_write <= vid_active; 
-
-/*
- * demo test output
- */
-
-always @(posedge clk)
-    if( y < 8 || y > 472 || x < 8 || x > 632 )
-        fifo_data <= 16'b00000_000000_11111;	// blue border
-    else if( x[2:0] == 0 || y[2:0] == 0 )
-        fifo_data <= 16'b11111_000000_00000;	// red lines
-    else if( x[3] ^ y[3] )
-        fifo_data <= 16'b11111_111111_11111;	// white squares
-    else
-        fifo_data <= 16'b00000_000000_00000;	// black squares
-        
 endmodule
 
