@@ -49,7 +49,7 @@ wire [15:0] wr_data = seg_col[segment];
 wire last_segment = (segment == max_segment);
 
 initial begin
-    seg_h[0] = 360;
+    seg_h[0] = 479;
     seg_h[1] = 440;
     seg_h[2] = 240;
     seg_h[3] = 200;
@@ -134,7 +134,7 @@ assign draw_done = state == DRAW && seg_state == SEG_SAVE && last_segment;
  */
 always @(posedge clk)
 	if( trigger )			y <= 0;
-	else if( draw_done )		y <= y + 1;
+	else if( copy_done )		y <= y + 1;
 
 /*
  * state machine
