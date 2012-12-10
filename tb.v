@@ -15,8 +15,8 @@ wire pclk;
 assign reset = glbl.GSR;
 
 initial begin
-	$recordfile( "results", "wrapsize=2GB" );
-	$recordvars( "depth=12", tb );
+	//$recordfile( "results", "wrapsize=2GB" );
+	//$recordvars( "depth=12", tb );
 	clk100 <= 1;
 	while( 1 ) 
             #5 clk100 = ~clk100;

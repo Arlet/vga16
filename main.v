@@ -73,10 +73,7 @@ reg [11:0] w = 1;
 
 always @(posedge clk)
    if( vtrigger )
-       if( w < 400 )
-           w <= 400;
-       else
-	   w <= w + 1;
+       w <= w + 1;
 
 /*
  * VGA generator

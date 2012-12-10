@@ -74,6 +74,7 @@ parameter
 
 reg [1:0] seg_state = SEG_INIT;
 reg [1:0] seg_next;
+reg fill = 0;
 
 /*
  * line drawing
@@ -86,6 +87,7 @@ always @(posedge clk)
 		       x <= segment << 3;
 		       e <= 0;
 		       seg_state <= SEG_DRAW;
+		       fill <= 1;
 		    end
 
 		SEG_LOAD: begin
@@ -97,15 +99,18 @@ always @(posedge clk)
 			    e <= seg_e[segment];
 			end
 			seg_state <= SEG_DRAW;
+			fill <= 1;
 		    end
 
-	 	SEG_DRAW:
-		    if( epos ) begin
-			x <= x + 1;
-			e <= e - seg_h[segment];
-		    end else begin
-			e <= e + w;
-			seg_state <= SEG_SAVE;
+	 	SEG_DRAW: begin
+			if( epos ) begin
+			    x <= x + 1;
+			    e <= e - seg_h[segment];
+			end else begin
+			    e <= e + w;
+			    seg_state <= SEG_SAVE;
+			end
+			fill <= 0;
 		    end
 
 		SEG_SAVE: begin
@@ -120,7 +125,7 @@ always @(posedge clk)
 	    seg_state <= SEG_LOAD;
 	end
 
-wire plot = epos && state == DRAW && seg_state == SEG_DRAW;
+wire plot = (fill | epos) && state == DRAW && seg_state == SEG_DRAW;
 assign linebuf_write = plot;
 assign draw_done = state == DRAW && seg_state == SEG_SAVE && last_segment;
 
