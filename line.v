@@ -4,39 +4,36 @@
  * (c) Arlet Ottens <arlet@c-scape.nl>
  */
 module line( 
-    input clk,
-    input [9:0] w,
-    input [9:0] h,
-    input trigger,
-    input [15:0] color,
-    input fifo_full,
-    output reg fifo_write,
-    output reg [15:0] fifo_data );
+	input clk,
+	input [9:0] w,
+	input [9:0] h,
+	input trigger,
+	input [15:0] color,
+	input fifo_full,
+	output reg fifo_write,
+	output reg [15:0] fifo_data );
 
-reg [10:0] x;		// line x coordinate
-reg [10:0] e;		// line x error
-wire epos = ~e[10];	// e >= 0 
+reg [10:0] x;				// line x coordinate
+reg [10:0] e;				// line x error
+wire epos = ~e[10];			// e positive
+reg [10:0] line = 0;			// line number
 
 /*
  * line drawing state machine
  */
 
 parameter
-        SYNC = 3'd0,                    // ready with field, waiting for new vsync
-        IDLE = 3'd1,                    // waiting for sprite / newline
-        BUSY = 3'd2,                    // paint the sprite
-        COPY = 3'd3;                    // copy the scanline to the video output
+        SYNC = 2'd0,                    // waiting for vertical trigger
+        DRAW = 2'd1,                    // draw the lines in the scanline buffer 
+        COPY = 2'd2;                    // copy the scanline to the video output
 
-reg [2:0] state = 0;
-reg [2:0] next = 0;
+reg [2:0] state = SYNC;
+reg [2:0] next = SYNC;
 
-wire draw;
-
-reg paint_done = 0;
-reg paint_start = 0;
+wire draw_done;
 wire linebuf_write;
+wire last_line = (line == 479);
 
-wire copy_start = 1;
 wire copy_done;
 
 reg [9:0] rd_addr = 0;
@@ -49,31 +46,27 @@ wire [15:0] wr_data = 16'b00000_111111_00000;
  */
 
 always @(posedge clk)
-    if( trigger ) begin
-        x <= 0;
-	e <= 0;
-    end else if( state == BUSY && !paint_done ) begin
-        if( epos ) begin
-	    x <= x + 1;
-	    e <= e - h;
-	end else begin
-	    paint_done <= 1;
-	    e <= e + w;
+	if( trigger ) begin
+	    x <= 0;
+	    e <= 0;
+	end else if( state == DRAW ) begin
+	    if( epos ) begin
+		x <= x + 1;
+		e <= e - h;
+	    end else 
+		e <= e + w;
 	end
-    end else if( paint_done ) begin
-       paint_done <= 0;
-    end
 
-wire plot = epos && !paint_done && state == BUSY;
+wire plot = epos && !draw_done && state == DRAW;
 assign linebuf_write = plot;
+assign draw_done = (state == DRAW && !epos);
 
+/*
+ * line counter
+ */
 always @(posedge clk)
-    if( trigger )
-        paint_start <= 1;
-    else if( state == BUSY )
-	paint_start <= 0;
-    else if( state == COPY )
-	paint_start <= 1;
+	if( trigger )			line <= 0;
+	else if( draw_done )		line <= line + 1;
 
 /*
  * state machine
@@ -85,14 +78,13 @@ always @(posedge clk)
 always @* begin
         next = state;
         case( state )
-            SYNC: if( trigger )                 next = IDLE;
+            SYNC: if( trigger )         next = DRAW;
 
-            IDLE: if( paint_start )             next = BUSY;
-                  else if( copy_start )         next = COPY;
+            DRAW: if( draw_done )       next = COPY; 
 
-            BUSY: if( paint_done )              next = IDLE;
-
-            COPY: if( copy_done )		next = IDLE;
+            COPY: if( copy_done )
+	    	      if( last_line )   next = SYNC;
+		      else		next = DRAW;
         endcase
 end
 
@@ -110,18 +102,14 @@ always @*
     	rd_addr = copy_addr;
 
 always @(posedge clk)
-	if( state != COPY )
-	    vid_data_valid <= 0;
-	else
-	    vid_data_valid <= 1;
+	if( state != COPY )		vid_data_valid <= 0;
+	else				vid_data_valid <= 1;
 
 wire copy_enable = !fifo_full || !vid_data_valid;
 
 always @(posedge clk)
-	if( state != COPY )
-	    copy_addr <= 0;
-	else if( copy_enable )
-	    copy_addr <= copy_addr + 1;
+	if( state != COPY )		copy_addr <= 0;
+	else if( copy_enable )		copy_addr <= copy_addr + 1;
 
 RAMB16_S18_S18 line_buffer(
 	// read/erase port 
