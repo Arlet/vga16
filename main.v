@@ -96,7 +96,6 @@ vga vga(
 line line( 
     	.clk(clk),
 	.w(w),
-	.h(300),
 	.trigger(vtrigger),
 	.fifo_full(fifo_full),
 	.fifo_write(fifo_write),

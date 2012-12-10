@@ -55,7 +55,7 @@ end
 
 always @(posedge pclk)
    if( main.vga.hactive & main.vga.vactive )
-       $fwrite( image, "%d %d %d\n", red, green, blue );
+       $fwrite( image, "%d %d %d\n", 2*red, green, 2*blue );
 
 main main( .clk100(clk100),
 	   .pclk_out(pclk),
