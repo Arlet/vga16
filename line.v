@@ -5,7 +5,7 @@
  */
 module line( 
 	input clk,
-	input [9:0] w,
+	input [10:0] w,
 	input trigger,
 	input fifo_full,
 	output reg fifo_write,
@@ -16,7 +16,7 @@ reg [10:0] e;				// line x error
 wire epos = ~e[10];			// e positive
 reg [10:0] y = 0;			// line number
 reg [5:0] segment = 0;			// 
-reg [5:0] max_segment = 6;		// 
+reg [5:0] max_segment = 15;		// 
 
 /*
  * line drawing state machine
@@ -56,14 +56,32 @@ initial begin
     seg_h[4] = 301;
     seg_h[5] = 100;
     seg_h[6] = 50;
+    seg_h[7] = 60;
+    seg_h[8] = 1000;
+    seg_h[9] = 140;
+    seg_h[10] = 135;
+    seg_h[11] = 752;
+    seg_h[12] = 70;
+    seg_h[13] = 500;
+    seg_h[14] = 501;
+    seg_h[15] = 90;
 
-    seg_col[0] = 16'b11111_111111_00000;
-    seg_col[1] = 16'b00000_111111_11111;
-    seg_col[2] = 16'b11111_000000_11111; 
-    seg_col[3] = 16'b11111_000000_00000;
-    seg_col[4] = 16'b00000_111111_00000;
-    seg_col[5] = 16'b00000_100000_11111;
-    seg_col[6] = 16'b11111_111111_11111;
+    seg_col[0]  = 16'b11111_111111_00000;
+    seg_col[1]  = 16'b10000_111111_11111;
+    seg_col[2]  = 16'b00000_111111_11111;
+    seg_col[3]  = 16'b11111_100000_11111; 
+    seg_col[4]  = 16'b11111_000000_11111; 
+    seg_col[5]  = 16'b11111_000000_10000;
+    seg_col[6]  = 16'b11111_000000_00000;
+    seg_col[7]  = 16'b00000_111111_10000;
+    seg_col[8]  = 16'b00000_111111_00000;
+    seg_col[9]  = 16'b10000_000000_11111;
+    seg_col[10] = 16'b00000_000000_11111;
+    seg_col[11] = 16'b01111_111111_11111;
+    seg_col[12] = 16'b11111_111111_11111;
+    seg_col[13] = 16'b10111_101111_10111;
+    seg_col[14] = 16'b01111_011111_01111;
+    seg_col[15] = 16'b00111_001111_11111;
 end
 
 parameter
@@ -72,7 +90,7 @@ parameter
 	SEG_DRAW = 2'd2,
 	SEG_SAVE = 2'd3;
 
-reg [1:0] seg_state = SEG_INIT;
+reg [1:0] seg_state = SEG_DRAW;
 reg [1:0] seg_next;
 reg fill = 0;
 
@@ -83,16 +101,9 @@ reg fill = 0;
 always @(posedge clk)
 	if( state == DRAW )
 	    case( seg_state )
-	        SEG_INIT: begin
-		       x <= segment << 3;
-		       e <= 0;
-		       seg_state <= SEG_DRAW;
-		       fill <= 1;
-		    end
-
 		SEG_LOAD: begin
 			if( y == 0 ) begin
-			    x <= segment << 3;
+			    x <= segment << 5;
 			    e <= 0;
 			end else begin
 			    x <= seg_x[segment]; 
@@ -104,10 +115,10 @@ always @(posedge clk)
 
 	 	SEG_DRAW: begin
 			if( epos ) begin
-			    x <= x + 1;
-			    e <= e - seg_h[segment];
+			    x <= w[10] ? x + 1 : x - 1;
+			    e <= e - seg_h[segment]; 
 			end else begin
-			    e <= e + w;
+			    e <= e + w[9:0];
 			    seg_state <= SEG_SAVE;
 			end
 			fill <= 0;

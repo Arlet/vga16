@@ -69,7 +69,7 @@ DCM_SP #(
         .RST(1'b0)
 );
 
-reg [11:0] w = 1;
+reg [10:0] w = 1;
 
 always @(posedge clk)
    if( vtrigger )
