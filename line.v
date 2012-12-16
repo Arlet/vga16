@@ -113,18 +113,17 @@ reg fill = 0;
 reg first = 1;
 
 always @(posedge clk)
-	if( w != 0 && off <= h ) begin
+	if( xy_valid && w != 0 && off <= h ) begin
 	    x <= x + 1;
 	    w <= w - 1;
-	end else if( vector_valid )
-	    if( read_vector ) begin
+	end else if( read_vector ) begin
 	        x <= x0;
 		w <= x1 - x0;
 		h <= y1 - y0;
 	        y <= y0;
 	      off <= scan_y - y0;
 	    col_1 <= col;
-	    end 
+	end 
 
 always @(posedge clk)
 	if( xy_valid )
