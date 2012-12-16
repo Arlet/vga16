@@ -5,7 +5,7 @@ NET "clk" TNM_NET = "clk";
 NET "clk100" TNM_NET = "clk100";
 NET "pclk" TNM_NET = "pclk";
 
-TIMESPEC TS_clk100 = PERIOD "clk100" 10 ns HIGH 50 %;
+TIMESPEC TS_clk100 = PERIOD "clk100" 5 ns HIGH 50 %;
 
 TIMESPEC "TS_test" = FROM "clk" TO "pclk" TIG;
 TIMESPEC "TS_test2" = FROM "pclk" TO "clk" TIG;

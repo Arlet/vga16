@@ -75,6 +75,11 @@ always @(posedge clk)
    if( vtrigger )
        w <= w + 1;
 
+parameter
+	RED   = 16'b11111_000000_00000,
+	GREEN = 16'b00000_111111_00000,
+	BLUE  = 16'b00000_000000_11111;
+
 /*
  * VGA generator
  */
@@ -90,9 +95,43 @@ vga vga(
 	.vtrigger(vtrigger)
    	);
 
+wire [9:0] vector_nr;
+wire read_vector;
+reg [9:0] x0;
+reg [9:0] y0;
+reg [9:0] x1;
+reg [9:0] y1;
+reg last_vector;
+reg [15:0] col;
+
+always @(posedge clk)
+	if( read_vector ) 
+	    if( vector_nr == 32 )  begin
+		x0 <= 17; 
+		y0 <= 17;
+		x1 <= 31;
+		y1 <= 31;
+		last_vector <= 1;
+		col <= RED;
+	    end else begin
+		x0 <= 16 + (vector_nr[0] ? {vector_nr[4:1], 4'h0} : 0);
+		y0 <= 16 + (vector_nr[0] ? 0 : {vector_nr[5:1], 4'h0});
+		x1 <= 16 + (vector_nr[0] ? {vector_nr[4:1], 4'h0} : 240);
+		y1 <= 16 + (vector_nr[0] ? 240 : {vector_nr[5:1], 4'h0});
+		last_vector <= 0; 
+		col <= GREEN;
+	    end
+
 line line( 
     	.clk(clk),
-	.w(w),
+	.vector(vector_nr),
+	.read_vector(read_vector),
+	.x0(x0),
+	.y0(y0),
+	.x1(x1),
+	.y1(y1),
+	.col(col),
+	.last_vector(last_vector),
 	.trigger(vtrigger),
 	.fifo_full(fifo_full),
 	.fifo_write(fifo_write),
