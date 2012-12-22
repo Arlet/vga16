@@ -106,21 +106,32 @@ reg [15:0] col;
 
 always @(posedge clk)
 	if( read_vector ) 
-	    if( vector_nr == 32 )  begin
-		x0 <= 17; 
-		y0 <= 17;
-		x1 <= 31;
-		y1 <= 31;
-		last_vector <= 1;
+	    if( vector_nr < 10 ) begin
+		x0 <= 0;
+		y0 <= 0 + vector_nr; 
+		x1 <= 100;
+		y1 <= 10 + vector_nr;
+		last_vector <= 0;
 		col <= RED;
-	    end else begin
-		x0 <= 16 + (vector_nr[0] ? {vector_nr[4:1], 4'h0} : 0);
-		y0 <= 16 + (vector_nr[0] ? 0 : {vector_nr[5:1], 4'h0});
-		x1 <= 16 + (vector_nr[0] ? {vector_nr[4:1], 4'h0} : 240);
-		y1 <= 16 + (vector_nr[0] ? 240 : {vector_nr[5:1], 4'h0});
-		last_vector <= 0; 
+	    end else 
+	    if( vector_nr < 11 ) begin
+		x0 <= 0;
+		y0 <= vector_nr * 9;
+		x1 <= 100;
+		y1 <= 100 + vector_nr * 10;
+		last_vector <= 0;
 		col <= GREEN;
-	    end
+	    /*
+	    end else if( vector_nr < 63+47) begin
+		x0 <= 10;
+		y0 <= 8 + 10*(vector_nr - 63);
+		x1 <= 629;
+		y1 <= 469;
+		last_vector <= 0;
+		col <= RED;
+	    */
+	    end else
+	        last_vector <= 1;
 
 line line( 
     	.clk(clk),
